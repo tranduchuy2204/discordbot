@@ -16,13 +16,8 @@ def setup_global_commands(bot: commands.Bot):
                 await interaction.response.send_message("Số lượng tin nhắn cần xoá phải từ 1 đến 100!", ephemeral=True)
                 return
 
-            # Trì hoãn phản hồi vì xoá tin nhắn có thể mất thời gian
             await interaction.response.defer(ephemeral=True)
-
-            # Xoá tin nhắn
             deleted = await interaction.channel.purge(limit=amount)
-
-            # Gửi thông báo
             await interaction.followup.send(
                 f"✅ Đã xoá {len(deleted)} tin nhắn.",
                 ephemeral=True
@@ -55,22 +50,17 @@ def setup_global_commands(bot: commands.Bot):
     @app_commands.describe(member="Người dùng cần xem thông tin")
     async def user_info(interaction: discord.Interaction, member: discord.Member = None):
         try:
-            # Nếu không chỉ định member thì lấy thông tin người gọi lệnh
             target = member or interaction.user
-
-            # Tạo embed hiển thị thông tin
             embed = discord.Embed(
                 title=f"👤 Thông tin người dùng",
                 description=f"Thông tin chi tiết về {target.mention}",
                 color=discord.Color.blue()
             )
 
-            # Thêm avatar và thông tin người dùng
             embed.set_thumbnail(url=target.display_avatar.url)
             embed.set_author(name=str(target),
                              icon_url=target.display_avatar.url)
 
-            # Thông tin cơ bản
             embed.add_field(
                 name="📝 Thông tin chung",
                 value=f"**Tên hiển thị:** {target.display_name}\n"
@@ -79,7 +69,6 @@ def setup_global_commands(bot: commands.Bot):
                 inline=False
             )
 
-            # Thông tin về thời gian
             created_time = int(target.created_at.timestamp())
             joined_time = int(target.joined_at.timestamp())
             embed.add_field(
@@ -91,7 +80,6 @@ def setup_global_commands(bot: commands.Bot):
                 inline=False
             )
 
-            # Thông tin về role
             roles = [role.mention for role in reversed(target.roles[1:])]
             embed.add_field(
                 name=f"🎭 Roles [{len(roles)}]",
@@ -99,7 +87,6 @@ def setup_global_commands(bot: commands.Bot):
                 inline=False
             )
 
-            # Thêm footer
             embed.set_footer(
                 text=f"Yêu cầu bởi {interaction.user}",
                 icon_url=interaction.user.display_avatar.url
@@ -134,12 +121,10 @@ def setup_global_commands(bot: commands.Bot):
         content: str
     ):
         try:
-            # Mã hóa nội dung và tạo URL QR code
             encoded_content = urllib.parse.quote(content)
             qr_url = f"https://img.vietqr.io/image/{bank.value}-{
                 account_number}-compact2.jpg?amount={amount}&addInfo={encoded_content}"
 
-            # Tạo embed hiển thị QR
             embed = discord.Embed(
                 title="🏦 Mã QR Thanh Toán",
                 description=f"**Số tiền:** {
@@ -147,7 +132,6 @@ def setup_global_commands(bot: commands.Bot):
                 color=discord.Color.green()
             )
 
-            # Thêm thông tin tài khoản
             embed.add_field(
                 name="📝 Thông tin tài khoản",
                 value=f"**Ngân hàng:** {
@@ -155,10 +139,7 @@ def setup_global_commands(bot: commands.Bot):
                 inline=False
             )
 
-            # Thêm hình QR
             embed.set_image(url=qr_url)
-
-            # Thêm footer
             embed.set_footer(
                 text=f"Yêu cầu bởi {interaction.user}",
                 icon_url=interaction.user.display_avatar.url
@@ -176,26 +157,20 @@ def setup_global_commands(bot: commands.Bot):
     @app_commands.describe(member="Người dùng cần xem avatar")
     async def avatar(interaction: discord.Interaction, member: discord.Member = None):
         try:
-            # Nếu không chỉ định member thì lấy avatar người gọi lệnh
             target = member or interaction.user
-
-            # Tạo embed hiển thị avatar
             embed = discord.Embed(
                 title=f"🖼️ Avatar của {target.display_name}",
                 description="Nhấp vào các link bên dưới để tải avatar với định dạng tương ứng",
                 color=target.color
             )
 
-            # Thêm thông tin người dùng
             embed.set_author(
                 name=str(target),
                 icon_url=target.display_avatar.url
             )
 
-            # Thêm avatar vào embed với kích thước lớn nhất
             embed.set_image(url=target.display_avatar.url)
 
-            # Thêm các link avatar với các định dạng khác nhau
             formats = []
             if target.display_avatar.is_animated():
                 formats.append(
@@ -215,13 +190,11 @@ def setup_global_commands(bot: commands.Bot):
                 inline=False
             )
 
-            # Thêm footer
             embed.set_footer(
                 text=f"ID: {target.id}",
                 icon_url=interaction.guild.icon.url if interaction.guild.icon else None
             )
 
-            # Thêm timestamp
             embed.timestamp = discord.utils.utcnow()
 
             await interaction.response.send_message(embed=embed)
@@ -236,33 +209,21 @@ def setup_global_commands(bot: commands.Bot):
     @app_commands.describe(prompt="Nội dung bạn muốn hỏi AI")
     async def chat(interaction: discord.Interaction, prompt: str):
         try:
-            # Gửi thông báo đang xử lý
             await interaction.response.defer()
 
-            # Tạo embed cho câu trả lời
             embed = discord.Embed(
                 title="💬 Gemini AI",
                 description="*Đang xử lý câu trả lời...*",
                 color=discord.Color.blue()
             )
 
-            # Gọi API Gemini và lấy phản hồi
             try:
                 import google.generativeai as genai
-
-                # Cấu hình API key
                 genai.configure(api_key=config.GEMINI_API_KEY)
-
-                # Khởi tạo model
                 model = genai.GenerativeModel('gemini-1.5-flash')
-
-                # Lấy phản hồi từ AI
                 response = model.generate_content(prompt)
-
-                # Cập nhật embed với câu trả lời
                 embed.description = response.text
                 embed.add_field(name="Câu hỏi", value=prompt, inline=False)
-
                 await interaction.followup.send(embed=embed)
 
             except Exception as e:
@@ -279,16 +240,12 @@ def setup_global_commands(bot: commands.Bot):
     @bot.tree.command(name="server", description="Xem thông tin về server và cấu hình máy")
     async def server_info(interaction: discord.Interaction):
         try:
-            # Lấy thông tin server
             guild = interaction.guild
-
-            # Tạo embed
             embed = discord.Embed(
                 title=f"📊 Thông tin Server: {guild.name}",
                 color=discord.Color.blue()
             )
 
-            # Thông tin cơ bản
             embed.add_field(
                 name="🆔 Server ID",
                 value=guild.id,
@@ -305,7 +262,6 @@ def setup_global_commands(bot: commands.Bot):
                 inline=True
             )
 
-            # Thông tin thành viên
             embed.add_field(
                 name="👥 Tổng thành viên",
                 value=guild.member_count,
@@ -322,7 +278,6 @@ def setup_global_commands(bot: commands.Bot):
                 inline=True
             )
 
-            # Thông tin boost
             embed.add_field(
                 name="🚀 Boost Level",
                 value=f"Level {guild.premium_tier}",
@@ -334,7 +289,6 @@ def setup_global_commands(bot: commands.Bot):
                 inline=True
             )
 
-            # Server icon
             if guild.icon:
                 embed.set_thumbnail(url=guild.icon.url)
 
