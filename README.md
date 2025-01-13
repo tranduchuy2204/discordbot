@@ -33,14 +33,13 @@
 1. Clone repository:
 
 ```bash
-git clone https://github.com/yourusername/discord-music-bot.git
+git clone https://github.com/tranduchuy2204/discordbot.git
 ```
 
 2. Tạo môi trường ảo:
    Linux:
 
 ```bash
-bash
 python -m venv venv
 source venv/bin/activate
 ```
