@@ -1,0 +1,6 @@
+discord.py
+wavelink
+youtube-dl
+PyNaCl
+google-generativeai
+urllib
